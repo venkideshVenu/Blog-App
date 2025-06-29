@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Blogs</title>
+    <link rel="stylesheet" href="blogStyles.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">Blog App</div>
+      <div class="nav-buttons">
+        <button class="create-btn" onclick="window.location.href='/createBlog'">
+          Create New Blog
+        </button>
+        <button class="signout-btn" onclick="signOut()">Sign Out</button>
+      </div>
+    </nav>
+
+    <main class="container">
+      <h1>Latest Blogs</h1>
+      <div class="blog-grid" id="blogContainer"></div>
+    </main>
+
+    <div id="toast"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script src="./scripts.js"></script>
+  </body>
+</html>

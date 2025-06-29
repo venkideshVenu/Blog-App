@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - Todo App</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="auth-container">
+      <h1>Sign Up to Todo App</h1>
+
+      <div class="input-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" placeholder="Enter your name" />
+      </div>
+
+      <div class="input-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter your username" />
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+        />
+      </div>
+
+      <button id="signup-btn" onclick="signUp()">Sign Up</button>
+
+      <p id="message"></p>
+      <p class="switch-page">
+        Already have an account? <a href="/signin">Sign In</a>
+      </p>
+    </div>
+    <div id="toast"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./scripts.js"></script>
+  </body>
+</html>

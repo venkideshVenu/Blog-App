@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog Details</title>
+    <link rel="stylesheet" href="/blogStyles.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">Blog App</div>
+      <button class="back-btn" onclick="window.location.href='/'">
+        <i class="fas fa-arrow-left"></i> Back to All Blogs
+      </button>
+    </nav>
+
+    <main class="container blog-detail">
+      <article id="blogContent">
+        <h1 class="blog-title"><!-- Will be filled by JS --></h1>
+        <div class="blog-meta">
+          <span class="author"><!-- Will be filled by JS --></span>
+          <span class="date"><!-- Will be filled by JS --></span>
+        </div>
+        <div class="blog-content">
+          <!-- Will be filled by JS -->
+        </div>
+      </article>
+    </main>
+    <div id="toast"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script src="/scripts.js"></script>
+  </body>
+</html>

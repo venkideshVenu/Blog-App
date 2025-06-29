@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Blog</title>
+    <link rel="stylesheet" href="./blogStyles.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">Blog App</div>
+      <button class="back-btn" onclick="window.location.href='/'">
+        <i class="fas fa-arrow-left"></i> Back to All Blogs
+      </button>
+    </nav>
+
+    <main class="container create-form">
+      <h1>Create New Blog</h1>
+      <form id="blogForm" onsubmit="createBlog(event)">
+        <div class="form-group">
+          <label for="blogTitle">Title</label>
+          <input
+            type="text"
+            id="blogTitle"
+            name="title"
+            placeholder="Enter blog title"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="blogContent">Content</label>
+          <textarea
+            id="blogContent"
+            name="content"
+            rows="10"
+            placeholder="Write your blog content here..."
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">Create Blog</button>
+      </form>
+      <div id="toast"></div>
+    </main>
+    <div id="toast"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script src="./scripts.js"></script>
+  </body>
+</html>

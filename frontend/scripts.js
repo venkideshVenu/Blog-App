@@ -1,6 +1,5 @@
 const baseUrl = "http://localhost:3000";
 
-// Fix the token check
 function checkAuth() {
   console.log("Checking authentication...");
   if (!localStorage.getItem("token")) {
@@ -13,7 +12,6 @@ function checkAuth() {
   return true;
 }
 
-// Run this check on pages that require authentication
 if (
   window.location.pathname !== "/signin" &&
   window.location.pathname !== "/signup"
@@ -40,16 +38,23 @@ async function signUp() {
     return;
   }
 
-  const response = await axios.post(baseUrl + "/signup", {
-    name: name,
-    username: username,
-    password: password,
-  });
+  try {
+    const response = await axios.post(baseUrl + "/signup", {
+      name: name,
+      username: username,
+      password: password,
+    });
 
-  showToast(response.data.message);
-  setTimeout(() => {
-    window.location.href = "/signin";
-  }, 1500);
+    showToast(response.data.message);
+    setTimeout(() => {
+      window.location.href = "/signin";
+    }, 1500);
+  } catch (error) {
+    console.error("Error during signup:", error);
+    showToast(
+      error.response?.data?.message || "Failed to sign up. Please try again."
+    );
+  }
 }
 
 async function signIn() {
@@ -61,70 +66,73 @@ async function signIn() {
     return;
   }
 
-  const response = await axios.post(baseUrl + "/signin", {
-    username: username,
-    password: password,
-  });
+  try {
+    const response = await axios.post(baseUrl + "/signin", {
+      username: username,
+      password: password,
+    });
 
-  localStorage.setItem("token", response.data.token);
+    localStorage.setItem("token", response.data.token);
 
-  showToast(response.data.message);
-  setTimeout(() => {
-    window.location.href = "/";
-  }, 1500);
+    showToast(response.data.message);
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
+  } catch (error) {
+    console.error("Error during signin:", error);
+    showToast(
+      error.response?.data?.message || "Failed to sign in. Please try again."
+    );
+  }
 }
-
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = "show";
-  setTimeout(() => {
-    toast.className = toast.className.replace("show", "");
-  }, 3000);
-}
-
-// if(window.location.pathname === "/") {
-//   fetchBlogs();
-// }
 
 async function fetchBlogs() {
   if (!checkAuth()) return;
 
-  const response = await axios.get(baseUrl + "/allblogs", {
-    headers: {
-      token: localStorage.getItem("token"),
-    },
-  });
+  try {
+    const response = await axios.get(baseUrl + "/allblogs", {
+      headers: {
+        token: localStorage.getItem("token"),
+      },
+    });
 
-  const blogs = response.data.blogs;
-  const user = response.data.user;
+    const blogs = response.data.blogs;
+    const user = response.data.user;
 
-  const blogList = document.getElementById("blogContainer");
-  blogList.innerHTML = "";
+    const blogList = document.getElementById("blogContainer");
+    blogList.innerHTML = "";
 
-  blogs.forEach((blog) => {
-    const blogItem = document.createElement("div");
-    blogItem.className = "blog-card";
-    blogItem.onclick = () => {
-      window.location.href = `/blog/${blog.id}`;
-    };
-    blogItem.innerHTML = `
-      <h2>${blog.title}</h2>
-      <p class="blog-excerpt">${blog.content.substring(0, 100)}...</p>
-      <div class="blog-meta">
-        <span class="author">By ${user.username}</span>
-        <span class="date">${new Date(
-          blog.createdAt
-        ).toLocaleDateString()}</span>
-      </div>
-    `;
-    blogList.appendChild(blogItem);
-  });
+    blogs.forEach((blog) => {
+
+      const blogItem = document.createElement("div");
+      blogItem.className = "blog-card";
+      blogItem.onclick = () => {
+        // Move the logging inside the click handler
+        const blogId = blog._id || blog.id;
+        console.log("Clicking blog with ID:", blogId);
+        console.log("Full blog object:", blog);
+        window.location.href = `/blog/${blogId}`;
+      };
+      blogItem.innerHTML = `
+        <h2>${blog.title}</h2>
+        <p class="blog-excerpt">${blog.content.substring(0, 100)}...</p>
+        <div class="blog-meta">
+          <span class="author">By ${user.username}</span>
+          <span class="date">${new Date(
+            blog.createdAt
+          ).toLocaleDateString()}</span>
+        </div>
+      `;
+      blogList.appendChild(blogItem);
+    });
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    showToast("Failed to load blogs. Please try again.");
+  }
 }
 
-// Update the createBlog function
 async function createBlog(event) {
-  event.preventDefault(); // Prevent the default form submission
+  event.preventDefault();
   if (!checkAuth()) return;
 
   const title = document.getElementById("blogTitle").value;
@@ -176,6 +184,15 @@ function getBlogIdFromUrl() {
 async function fetchBlogDetail(blogId) {
   if (!checkAuth()) return;
 
+  if (!blogId || blogId === "undefined") {
+    console.error("Invalid blog ID:", blogId);
+    showToast("Invalid blog ID");
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
+    return;
+  }
+
   try {
     const response = await axios.get(`${baseUrl}/blogDetail/${blogId}`, {
       headers: {
@@ -197,6 +214,15 @@ async function fetchBlogDetail(blogId) {
     console.error("Error fetching blog details:", error);
     showToast("Failed to load blog. Please try again.");
   }
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = "show";
+  setTimeout(() => {
+    toast.className = toast.className.replace("show", "");
+  }, 3000);
 }
 
 // Add this at the end of the file

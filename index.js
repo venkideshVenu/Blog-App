@@ -1,21 +1,22 @@
-const fs = require("fs");
+require("dotenv").config();
 const cors = require("cors");
-const { v4: uuidv4 } = require("uuid");
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { create } = require("domain");
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+
+const { UserModel, BlogModel } = require("./db");
+
+mongoose.connect(process.env.MONGO_CONNECTION_URL);
 
 const app = express();
 app.use(express.json());
 
 app.use(cors());
 
-const filesPath = "F:/MITS Elevate/day7/blog/files";
-const frontEndPath = "F:/MITS Elevate/day7/blog/frontend";
+const frontEndPath = "f:/100x Projects/blog/frontend";
 
 app.use(express.static(frontEndPath));
-
-const secretId = "secretId";
 
 function auth(req, res, next) {
   const token = req.headers.token;
@@ -27,7 +28,7 @@ function auth(req, res, next) {
     });
   }
   try {
-    const user = jwt.verify(token, secretId);
+    const user = jwt.verify(token, process.env.JWT_SECRET);
     req.user = user;
     next();
   } catch (err) {
@@ -36,78 +37,6 @@ function auth(req, res, next) {
       status: 401,
       message: "Unauthorized access User not Found",
     });
-  }
-}
-
-// function to find user from token
-function getUser(token) {
-  try {
-    const u = jwt.verify(token, secretId);
-    const username = u.username;
-    const users = getUserFromFiles();
-    return users.find((us) => us.username === username);
-  } catch (err) {
-    console.error("Error verifying token:", err);
-    return null;
-  }
-}
-
-// read users from users.json
-function getUserFromFiles() {
-  const data = fs.readFileSync(filesPath + "/users.json", "utf8");
-
-  let fileUsers = [];
-  try {
-    if (data) {
-      const parsed = JSON.parse(data);
-      fileUsers = parsed.users || [];
-      return fileUsers;
-    }
-  } catch (parseErr) {
-    console.error("Error parsing users.json", parseErr);
-    return [];
-  }
-}
-
-// save users to users.json
-function saveUserFile(fileUsers) {
-  try {
-    fs.writeFileSync(
-      filesPath + "/users.json",
-      JSON.stringify({ users: fileUsers }, null, 2)
-    );
-    return true;
-  } catch (err) {
-    console.error("Error writing to file:", err);
-    return false;
-  }
-}
-
-// read blogs from blogs.json
-function getBlogFromFiles() {
-  try {
-    const data = fs.readFileSync(filesPath + "/blogs.json", "utf8");
-    if (!data) return [];
-
-    const parsed = JSON.parse(data);
-    return parsed.blogs || [];
-  } catch (parseErr) {
-    console.error("Error in getBlogFromFiles:", parseErr);
-    return [];
-  }
-}
-
-// save blogs to blogs.json
-function saveBlogFile(fileBlogs) {
-  try {
-    fs.writeFileSync(
-      filesPath + "/blogs.json",
-      JSON.stringify({ blogs: fileBlogs }, null, 2)
-    );
-    return true;
-  } catch (err) {
-    console.error("Error writing to blogs file:", err);
-    return false;
   }
 }
 
@@ -133,125 +62,125 @@ app.get("/blog/:id", (req, res) => {
 });
 
 // Sign up
-app.post("/signup", (req, res) => {
+app.post("/signup", async (req, res) => {
   console.log("post signUp");
-  const name = req.body.name;
-  const username = req.body.username;
-  const password = req.body.password;
+  const { name, username, password } = req.body;
 
   if (!name || !username || !password) {
-    res.send({
-      status: 404,
-      message: "All fileds must be present",
+    return res.status(400).send({
+      status: 400,
+      message: "All fields must be present",
     });
   }
 
-  const users = getUserFromFiles();
-
-  const existingUser = users.find((user) => user.username === username);
-
-  if (existingUser) {
-    return res.send({
-      message: "User Already Exists, Try to log in with other details",
+  try {
+    const existingUser = await UserModel.findOne({
+      username: username,
     });
-  }
 
-  const user = {
-    id: uuidv4(),
-    name: name,
-    username: username,
-    password: password,
-  };
+    if (existingUser) {
+      return res.status(409).send({
+        status: 409,
+        message: "User Already Exists, Try to log in with other details",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  users.push(user);
+    const user = {
+      name: name,
+      username: username,
+      password: hashedPassword,
+    };
 
-  const status = saveUserFile(users);
-
-  if (status) {
-    res.send({
-      status: 200,
-      message: "User created successfully",
+    const createdUser = await UserModel.create(user);
+    res.status(201).send({
+      status: 201,
+      message: "User Created Successfully",
+      user: {
+        id: createdUser._id,
+        name: createdUser.name,
+        username: createdUser.username,
+      },
     });
-  } else {
-    res.status(500).send("Internal Server Error");
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).send({
+      status: 500,
+      message: "Internal server error",
+    });
   }
 });
 
 // Sign in
-app.post("/signin", (req, res) => {
-  console.log("post signin");
+app.post("/signin", async (req, res) => {
+  const { username, password } = req.body;
 
-  const username = req.body.username;
-  const password = req.body.password;
-
-  const users = getUserFromFiles();
-
-  const user = users.find(
-    (u) => u.username === username && u.password === password
-  );
-
-  if (!user) {
-    res.send({
-      message: "User Not found ",
+  const user = await UserModel.findOne({ username: username });
+  if (!username || !password) {
+    return res.status(400).send({
+      status: 400,
+      message: "Username and password are required",
     });
   }
 
-  const token = jwt.sign({ id: user.id, username: user.username }, secretId);
+  try {
+    const user = await UserModel.findOne({
+      username: username,
+    });
 
-  res.send({
-    status: 200,
-    token: token,
-    message: "Successfully Signed In",
-  });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).send({
+        status: 401,
+        message: "Invalid credentials",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET
+    );
+
+    res.send({
+      status: 200,
+      token: token,
+      message: "Successfully Signed In",
+    });
+  } catch (error) {
+    console.error("Error during signin:", error);
+    res.status(500).send({
+      status: 500,
+      message: "Internal server error",
+    });
+  }
 });
 
 // get all blogs
-app.get("/allblogs", auth, (req, res) => {
+app.get("/allblogs", auth, async (req, res) => {
   console.log("get allblogs");
 
-  const token = req.headers.token;
+  try {
+    const user = req.user;
+    const blogs = await BlogModel.find();
 
-  const user = getUser(token);
-
-  if (!user) {
     res.send({
-      status: 401,
-      message: "Unauthorized access User not Found",
+      status: 200,
+      message: "Blogs retrieved successfully",
+      user: user,
+      blogs: blogs,
+    });
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    res.status(500).send({
+      status: 500,
+      message: "Error fetching blogs",
     });
   }
-
-  const blogs = getBlogFromFiles();
-
-  res.send({
-    status: 200,
-    message: "Blogs retreived successfully",
-    user: user,
-    blogs: blogs,
-  });
 });
 
 // create blog
-app.post("/createBlog", (req, res) => {
+app.post("/createBlog", auth, async (req, res) => {
   console.log("post createBlog");
-
   const { title, content } = req.body;
-  const token = req.headers.token;
-
-  if (!token) {
-    return res.status(401).send({
-      status: 401,
-      message: "Unauthorized access",
-    });
-  }
-
-  const user = getUser(token);
-
-  if (!user) {
-    return res.status(401).send({
-      status: 401,
-      message: "User not found",
-    });
-  }
 
   if (!title || !content) {
     return res.status(400).send({
@@ -260,19 +189,11 @@ app.post("/createBlog", (req, res) => {
     });
   }
 
-  const blogs = getBlogFromFiles();
-
-  const blog = {
-    id: uuidv4(),
+  const blog = await BlogModel.create({
     title: title,
     content: content,
-    userId: user.id,
-    createdAt: new Date().toISOString(),
-  };
-
-  blogs.push(blog);
-
-  saveBlogFile(blogs);
+    userId: req.user.id,
+  });
 
   res.send({
     status: 201,
@@ -281,29 +202,11 @@ app.post("/createBlog", (req, res) => {
   });
 });
 
-app.get("/blogDetail/:id", (req, res) => {
+app.get("/blogDetail/:id", auth, async (req, res) => {
   console.log("get Detail/id");
 
   const blogId = req.params.id;
-  const token = req.headers.token;
-
-  if (!token) {
-    return res.status(401).send({
-      status: 401,
-      message: "Unauthorized access",
-    });
-  }
-
-  const currentUser = getUser(token);
-  if (!currentUser) {
-    return res.status(401).send({
-      status: 401,
-      message: "User not found",
-    });
-  }
-
-  const blogs = getBlogFromFiles();
-  const blog = blogs.find((b) => b.id === blogId);
+  const blog = await BlogModel.findById(blogId);
 
   if (!blog) {
     return res.status(404).send({
@@ -312,10 +215,7 @@ app.get("/blogDetail/:id", (req, res) => {
     });
   }
 
-  // Get the author of the blog
-  const users = getUserFromFiles();
-  const user = users.find((u) => u.id === blog.userId);
-
+  const user = await UserModel.findById(blog.userId);
   res.send({
     status: 200,
     message: "Blog Retrieved Successfully",
@@ -324,4 +224,9 @@ app.get("/blogDetail/:id", (req, res) => {
   });
 });
 
-app.listen(3000);
+const PORT = process.env.PORT;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Frontend served from: ${frontEndPath}`);
+});

@@ -19,7 +19,7 @@ if (
   checkAuth();
 }
 
-// Add sign out function
+//  sign out function
 function signOut() {
   localStorage.removeItem("token");
   showToast("Signed out successfully");
@@ -28,6 +28,7 @@ function signOut() {
   }, 1000);
 }
 
+// sign up
 async function signUp() {
   const name = document.getElementById("name").value;
   const username = document.getElementById("username").value;
@@ -57,6 +58,7 @@ async function signUp() {
   }
 }
 
+// sign in
 async function signIn() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
@@ -86,6 +88,7 @@ async function signIn() {
   }
 }
 
+// fetch blog
 async function fetchBlogs() {
   if (!checkAuth()) return;
 
@@ -103,7 +106,6 @@ async function fetchBlogs() {
     blogList.innerHTML = "";
 
     blogs.forEach((blog) => {
-
       const blogItem = document.createElement("div");
       blogItem.className = "blog-card";
       blogItem.onclick = () => {
@@ -131,6 +133,7 @@ async function fetchBlogs() {
   }
 }
 
+// create blog
 async function createBlog(event) {
   event.preventDefault();
   if (!checkAuth()) return;
@@ -169,6 +172,7 @@ async function createBlog(event) {
   }
 }
 
+//  retrieve blog id
 function getBlogIdFromUrl() {
   const path = window.location.pathname;
   console.log("Analyzing path:", path);
@@ -212,7 +216,42 @@ async function fetchBlogDetail(blogId) {
     document.querySelector(".blog-content").innerHTML = blog.content;
   } catch (error) {
     console.error("Error fetching blog details:", error);
-    showToast("Failed to load blog. Please try again.");
+    showToast("Failed to load blog.");
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
+  }
+}
+
+async function deleteBlog() {
+  const blogId = getBlogIdFromUrl();
+  if (!blogId || blogId === "undefined") {
+    showToast("Invalid Blog ID");
+    return;
+  }
+
+  const confirmation = confirm(
+    "Are you sure you want to delete this blog? This action cannot be undone. "
+  );
+  if (!confirmation) return;
+
+  try {
+    const response = await axios.delete(baseUrl + "/deleteBlog/" + blogId, {
+      headers: {
+        token: localStorage.getItem("token"),
+      },
+    });
+    console.log(response);
+    showToast(response.data.message);
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
+  } catch (error) {
+    console.error("Error deleting blog:", error);
+    showToast(
+      error.response?.data?.message ||
+        "Failed to delete blog. Please try again."
+    );
   }
 }
 

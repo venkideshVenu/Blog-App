@@ -9,11 +9,15 @@
   <body>
     <nav class="navbar">
       <div class="logo">Blog App</div>
-      <button class="back-btn" onclick="window.location.href='/'">
-        <i class="fas fa-arrow-left"></i> Back to All Blogs
-      </button>
+      <div class="nav-buttons">
+        <button class="back-btn" onclick="window.location.href='/'">
+          <i class="fas fa-arrow-left"></i> Back to All Blogs
+        </button>
+        <button class="delete-btn" onclick="deleteBlog()">
+          <i class="fas fa-trash"></i> Delete Blog
+        </button>
+      </div>
     </nav>
-
     <main class="container blog-detail">
       <article id="blogContent">
         <h1 class="blog-title"><!-- Will be filled by JS --></h1>
@@ -28,7 +32,6 @@
     </main>
     <div id="toast"></div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <script src="/scripts.js"></script>
   </body>
 </html>

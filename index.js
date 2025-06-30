@@ -15,6 +15,7 @@ app.use(express.json());
 app.use(cors());
 
 const frontEndPath = "f:/100x Projects/blog/frontend";
+const PORT = process.env.PORT;
 
 app.use(express.static(frontEndPath));
 
@@ -224,7 +225,20 @@ app.get("/blogDetail/:id", auth, async (req, res) => {
   });
 });
 
-const PORT = process.env.PORT;
+
+app.delete('/deleteBlog/:id',async (req, res) =>{
+  const blogId = req.params.id;
+
+  const blog = await BlogModel.deleteOne({
+    _id : blogId
+  })
+
+  res.send({
+    blogId : blog,
+    message : "blog deleted successfully"
+  })
+
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
